@@ -1,0 +1,39 @@
+# use the latest value of the SSM parameter store
+# for this demo, I have already created ml-dev and ml-ami in SSM 
+# with value of t2.micro and ami-01aad86525617098d (eg Ubuntu deep learning)
+Parameters:
+  InstanceType:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: /EC2/ml-dev
+  SSHKey:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: an existing keypair for ssh
+
+  ImageId: 
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: /EC2/ml-ami
+
+Resources:
+  MyInstanceWithParameters:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      SecurityGroups:
+        - !Ref ServerSecurityGroup
+
+  # security group for ML AMI in dev
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: vcap ML ssh and http access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
